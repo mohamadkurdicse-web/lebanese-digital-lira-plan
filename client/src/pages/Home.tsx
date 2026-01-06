@@ -1,10 +1,13 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Shield, Zap, TrendingUp, Lock, Smartphone, BarChart3, CheckCircle } from "lucide-react";
 import { useState } from "react";
+import { getLoginUrl } from "@/const";
 
 export default function Home() {
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
@@ -20,7 +23,15 @@ export default function Home() {
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" size="sm">العربية</Button>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">اتصل بنا</Button>
+            {isAuthenticated ? (
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                {user?.name || "حسابي"}
+              </Button>
+            ) : (
+              <a href={getLoginUrl()}>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">دخول</Button>
+              </a>
+            )}
           </div>
         </div>
       </nav>
