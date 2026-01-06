@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Exchange from "./pages/Exchange";
 import KYC from "./pages/KYC";
 import KYCReview from "./pages/KYCReview";
+import Analytics from "./pages/Analytics";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/exchange" component={Exchange} />
       <Route path="/kyc" component={KYC} />
       <Route path="/kyc-review" component={KYCReview} />
+      <Route path="/analytics" component={Analytics} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
