@@ -173,6 +173,98 @@ router.get("/api/user/profile", verifyAuth, async (req: Request, res: Response) 
   }
 });
 
+/**
+ * 2FA Routes
+ */
+
+// Generate 2FA secret
+router.post("/api/2fa/generate", verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { TwoFactorService } = await import("./2fa.service");
+    const twoFactorService = new TwoFactorService();
+    const userId = (req as any).userId;
+    const db = await getDb();
+
+    if (!db) {
+      return res.status(500).json({ error: "Database connection failed" });
+    }
+
+    const userResult = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const user = userResult.length > 0 ? userResult[0] : null;
+
+    if (!user || !user.email) {
+      return res.status(400).json({ error: "User email not found" });
+    }
+
+    const secret = await twoFactorService.generateSecret(user.email);
+    res.json({ success: true, secret });
+  } catch (error) {
+    console.error("Error generating 2FA secret:", error);
+    res.status(500).json({ error: "Failed to generate 2FA secret" });
+  }
+});
+
+// Verify 2FA token
+router.post("/api/2fa/verify", verifyAuth, async (req: Request, res: Response) => {
+  try {
+    const { token, secret } = req.body;
+    const { TwoFactorService } = await import("./2fa.service");
+    const twoFactorService = new TwoFactorService();
+
+    if (!token || !secret) {
+      return res.status(400).json({ error: "Missing token or secret" });
+    }
+
+    const verified = twoFactorService.verifyToken(secret, token);
+    res.json({ success: true, verified });
+  } catch (error) {
+    console.error("Error verifying 2FA token:", error);
+    res.status(500).json({ error: "Failed to verify token" });
+  }
+});
+
+/**
+ * Notification Routes
+ */
+
+// Send transaction notification
+router.post("/api/notifications/transaction", async (req: Request, res: Response) => {
+  try {
+    const { userEmail, transactionType, amount, currency, status, recipientAddress } = req.body;
+    const { NotificationService } = await import("./notification.service");
+    const notificationService = new NotificationService();
+
+    const sent = await notificationService.notifyTransaction(
+      userEmail,
+      transactionType,
+      amount,
+      currency,
+      status,
+      recipientAddress
+    );
+
+    res.json({ success: true, sent });
+  } catch (error) {
+    console.error("Error sending transaction notification:", error);
+    res.status(500).json({ error: "Failed to send notification" });
+  }
+});
+
+// Send security alert
+router.post("/api/notifications/security", async (req: Request, res: Response) => {
+  try {
+    const { userEmail, alertType, description } = req.body;
+    const { NotificationService } = await import("./notification.service");
+    const notificationService = new NotificationService();
+
+    const sent = await notificationService.notifySecurityAlert(userEmail, alertType, description);
+    res.json({ success: true, sent });
+  } catch (error) {
+    console.error("Error sending security alert:", error);
+    res.status(500).json({ error: "Failed to send alert" });
+  }
+});
+
 // Health check endpoint
 router.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
